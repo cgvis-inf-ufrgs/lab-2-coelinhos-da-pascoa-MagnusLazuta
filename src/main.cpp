@@ -400,18 +400,45 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
 
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, SPHERE);
-        DrawVirtualObject("the_sphere");
+        //desenha os coelhos
+        std::vector<glm::vec3> bunny_positons = {
+            {0.0f, 0.0f, 0.0f},
+        };
 
-        // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f);
-        glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(g_object_id_uniform, BUNNY);
-        DrawVirtualObject("the_bunny");
+        for(const auto& p : bunny_positons){
+            model = Matrix_Translate(p.x, p.y, p.z);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, BUNNY);
+            DrawVirtualObject("the_bunny");
+        }
 
+        // Desenhamos as esferas orbitando os coelhos com composição de matrizes.
+        const float raio_orbita = 1.5f;
+        const float altura_orbita = 1.2f;
+        static float angle = 0.0f; // Avança a cada frame, sem usar tempo absoluto.
+        angle += 0.02f;
+        if (angle > 2.0f * 3.141592f) angle -= 2.0f * 3.141592f;
+
+        for (const auto& p : bunny_positons)
+        {
+            model = Matrix_Translate(p.x, p.y, p.z)
+                  * Matrix_Rotate_Y(angle)
+                  * Matrix_Translate(0.0f, altura_orbita, raio_orbita)
+                  * Matrix_Scale(0.5f, 0.5f, 0.5f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+
+            model = Matrix_Translate(p.x, p.y, p.z)
+                  * Matrix_Rotate_Y(angle + 3.141592f)
+                  * Matrix_Translate(0.0f, altura_orbita, raio_orbita)
+                  * Matrix_Scale(0.5f, 0.5f, 0.5f);
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(g_object_id_uniform, SPHERE);
+            DrawVirtualObject("the_sphere");
+        }
+        
+        
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.0f,0.0f) * Matrix_Scale(4.0f,1.0f,4.0f);
         glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -1483,4 +1510,3 @@ void PrintObjModelInfo(ObjModel* model)
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
-
