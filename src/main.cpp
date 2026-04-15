@@ -244,7 +244,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - Seu Cartao - Seu Nome", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - 325091 - Eduardo Magnus Lazuta", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -400,39 +400,54 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
 
-        //desenha os coelhos
-        std::vector<glm::vec3> bunny_positons = {
-            {0.0f, 0.0f, 0.0f},
-        };
+        // Desenhamos as esferas orbitando os coelhos com composição de matrizes.
+        const float pi = 3.141592f;
+        const int num_coelhos = 16;
+        const float raio_orbita = 1.5f;
+        const float altura_orbita = 0.0f;
+        const float raio_orbita_coelho = 3.0f;
+        const float velocidade_angular = -0.75f; // rad/s
+        const float angle = velocidade_angular * static_cast<float>(glfwGetTime());
+        const float step_posicionamento = (2 * pi) / (float) num_coelhos;
 
-        for(const auto& p : bunny_positons){
-            model = Matrix_Translate(p.x, p.y, p.z);
-            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        const float amplitude_senoide = 1.0f;
+        const float altura_inicial_coelho = 1.0f;
+        const float ciclos_senoide_na_fila = 4.0f;
+        const float escala_coelho = 0.5f;
+        const float escala_esfera = 0.25f;
+
+        //desenha os coelhos
+        for (int k = 0; k < num_coelhos; ++k)
+        {
+            const float ajuste_orientacao_coelho = -pi / 2.0f;
+            const float angulo_posicao = k * step_posicionamento;
+            const float angulo_orbita_atual = - angle + angulo_posicao;
+            const float altura_final = altura_inicial_coelho + amplitude_senoide * sin(ciclos_senoide_na_fila * angulo_orbita_atual);
+            const bool gira_verticalmente = ((k + 1) % 4 == 0);
+            const glm::mat4 rotacao_vertical = gira_verticalmente ? Matrix_Rotate_Z(-angle) : Matrix_Identity();
+            
+            glm::mat4 bunny_model = Matrix_Rotate_Y(angulo_orbita_atual)
+                                  * Matrix_Translate(raio_orbita_coelho, altura_final, 0.0f)
+                                  * Matrix_Rotate_Y(ajuste_orientacao_coelho)
+                                  * rotacao_vertical
+                                  * Matrix_Scale(escala_coelho, escala_coelho, escala_coelho);
+
+            glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(bunny_model));
             glUniform1i(g_object_id_uniform, BUNNY);
             DrawVirtualObject("the_bunny");
-        }
 
-        // Desenhamos as esferas orbitando os coelhos com composição de matrizes.
-        const float raio_orbita = 1.5f;
-        const float altura_orbita = 1.2f;
-        static float angle = 0.0f; // Avança a cada frame, sem usar tempo absoluto.
-        angle += 0.02f;
-        if (angle > 2.0f * 3.141592f) angle -= 2.0f * 3.141592f;
-
-        for (const auto& p : bunny_positons)
-        {
-            model = Matrix_Translate(p.x, p.y, p.z)
-                  * Matrix_Rotate_Y(angle)
-                  * Matrix_Translate(0.0f, altura_orbita, raio_orbita)
-                  * Matrix_Scale(0.5f, 0.5f, 0.5f);
+            model = bunny_model
+                  * Matrix_Rotate_X(angle)
+                  * Matrix_Translate(0.0f, 0.0f, raio_orbita)
+                  * Matrix_Scale(escala_esfera, escala_esfera, escala_esfera);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
 
-            model = Matrix_Translate(p.x, p.y, p.z)
-                  * Matrix_Rotate_Y(angle + 3.141592f)
+            model = bunny_model
+                  * Matrix_Rotate_X(angle + pi)
                   * Matrix_Translate(0.0f, altura_orbita, raio_orbita)
-                  * Matrix_Scale(0.5f, 0.5f, 0.5f);
+                  * Matrix_Scale(escala_esfera, escala_esfera, escala_esfera);
             glUniformMatrix4fv(g_model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(g_object_id_uniform, SPHERE);
             DrawVirtualObject("the_sphere");
